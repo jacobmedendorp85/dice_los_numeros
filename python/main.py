@@ -1,20 +1,21 @@
 
 
 from copy import deepcopy
-import pygsheets
 import pandas as pd
 from pprint import pp as pp
 
 from die import DieD6, D6Die
 from rollsim import RollSim
+from gsheets.gsheets import GSheet
 
-GC = pygsheets.authorize(service_file='dice_los_numeros/python/credentials/service_account_credentials.json')
-SHEET = GC.open('Test Python')
+GSheet = GSheet()
+SHEET = GSheet.gc.open('Test Python')
 
 DICE_LIST = []
 
 class UnknownDieError(Exception):
     pass
+
 
 def get_die_by_name(name):
 
