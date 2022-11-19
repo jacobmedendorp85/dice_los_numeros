@@ -1,3 +1,3 @@
 set PYTHONPATH=%PYTHONPATH%;../python
 python ../python/main.py
-pause
+IF ERRORLEVEL 1 pause

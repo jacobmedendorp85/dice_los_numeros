@@ -8,8 +8,8 @@ from die import DieD6, D6Die
 from rollsim import RollSim
 from gsheets.gsheets import GSheet
 
-GSheet = GSheet()
-SHEET = GSheet.gc.open('Test Python')
+GSHEET = GSheet()
+
 
 DICE_LIST = []
 
@@ -128,7 +128,7 @@ def write_google_sheet(sims, ac, crit_threshold, hits, crits, output_sheet):
     crit_percentage = crit_percentage * 100
     crit_percentage = round(crit_percentage, 2)
     
-    wks = SHEET.worksheet_by_title(str(output_sheet))
+    
 
     summary = []
 
@@ -176,6 +176,7 @@ def write_google_sheet(sims, ac, crit_threshold, hits, crits, output_sheet):
     )
 
     summary_df = pd.DataFrame(summary)
+    GSHEET.write_to_sheet(str(output_sheet), summary_df, (1,1))
 
     data_list = []
 
@@ -206,40 +207,22 @@ def write_google_sheet(sims, ac, crit_threshold, hits, crits, output_sheet):
         data_list.append(data_dict)
 
     df = pd.DataFrame(data_list)
-    wks.set_dataframe(summary_df, (1,1))
-    wks.set_dataframe(df, (10,1))
+    GSHEET.write_to_sheet(str(output_sheet), df, (10,1))
+    
 
 def get_dice():
 
-    print("Getting dice")
-    wks = SHEET.worksheet_by_title('Dice Setup')
+    dice_dicts = GSHEET.read_dice_config()
 
-    df = wks.get_as_df(has_header=True, start="B1")
-
-    a_col = 0
-    p_col = 2
-
-    num_of_dice = 6
-
-    for die in range(1, num_of_dice+1):
-        die_ser = df.iloc[0:6, a_col:p_col]
-        die_index = (die_ser.columns)
-        die_name = die_index.values[0]
-
-        a_col +=2
-        p_col +=2
-
-        values = die_ser.iloc[0:6, 0].tolist()
-        pips = die_ser.iloc[0:6, 1].tolist()
-
-        d6_die = D6Die(die_name, values, pips)
+    for dice_dict in dice_dicts:
+        d6_die = D6Die(dice_dict['name'], dice_dict['values'], dice_dict['pips'])
         DICE_LIST.append(d6_die)
 
 
 def roll_from_sheet():
 
 
-    wks = SHEET.worksheet_by_title('Dice Setup')
+    wks = GSHEET.get_wks('Dice Setup')
 
     roll_df = wks.get_as_df(has_header=True, start="A10", end="I11")
 
@@ -265,8 +248,8 @@ def roll_from_sheet():
         output_sheet=output_sheet
     )
 
-get_dice()
-roll_from_sheet()
 
-
-print("All done!")
+if __name__ == "__main__":
+    get_dice()
+    roll_from_sheet()
+    print("All done!")
