@@ -373,7 +373,7 @@ def roll_sims(
                     sim_number=i)
                 sims.append(sim)
                 i += 1
-    elif attack_die1 and attack_die_2 and not defense_die1:
+    elif attack_die1 and attack_die2 and not defense_die1:
         for attack in bigole_dict['attack_dice']:
             for attack_alt in bigole_dict['attack_dice_alts']:
                 sim = RollSim(
