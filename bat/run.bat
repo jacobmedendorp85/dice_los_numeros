@@ -1,3 +1,3 @@
 set PYTHONPATH=%PYTHONPATH%;../python
-python ../python/main.py
+"C:\Program Files\Python311\python.exe" ../python/main.py
 IF ERRORLEVEL 1 pause
