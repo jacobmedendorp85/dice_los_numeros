@@ -5,8 +5,8 @@ class RollSim(object):
         crit_threshold=None, 
         attack_die=None,
         defense_die=None,
-        attack_die_alt=None,
-        defense_die_alt=None,
+        attack_die_alt='',
+        defense_die_alt='',
         attack_modifier=None,
         defense_modifier=None,
         sim_number=None
@@ -30,7 +30,8 @@ class RollSim(object):
         self.rolled_dice = []
 
         self.rolled_dice.append(self.attack_die)
-        self.rolled_dice.append(self.defense_die)
+        if self.defense_die:
+            self.rolled_dice.append(self.defense_die)
         if self.attack_die_alt:
             self.rolled_dice.append(self.attack_die_alt)
         if self.defense_die_alt:
@@ -42,7 +43,9 @@ class RollSim(object):
         if self.attack_die_alt:
             attack_alt_num = self.attack_die_alt.active_face['number']
         
-        defense_num = self.defense_die.active_face['number']
+        defense_num = 0
+        if self.defense_die:
+            defense_num = self.defense_die.active_face['number']
         if self.defense_die_alt:
             defense_alt_num = self.defense_die_alt.active_face['number']
 
@@ -71,7 +74,9 @@ class RollSim(object):
         if self.attack_die_alt:
             attack_pips_num_alt = self.attack_die_alt.active_face['pips']
         
-        defense_pips_num = self.defense_die.active_face['pips']
+        defense_pips_num = 0
+        if self.defense_die:
+            defense_pips_num = self.defense_die.active_face['pips']
         if self.defense_die_alt:
             defense_pips_alt_num = self.defense_die_alt.active_face['pips']
 

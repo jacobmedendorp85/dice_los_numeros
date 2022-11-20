@@ -18,11 +18,15 @@ class GSheet(object):
         credentials_path = os.path.join(dirname, rel_path)
         return credentials_path
 
-    def get_wks(self, sheet_name):
-        return self.sheet.worksheet_by_title(sheet_name)
+    def get_wks(self, wks_name):
+        return self.sheet.worksheet_by_title(wks_name)
 
-    def write_to_sheet(self, sheet_name, dataframe, pos):
-        wks = self.get_wks(sheet_name)
+    def clear_wks(self, wks_name):
+        wks = self.get_wks(wks_name)
+        wks.clear()
+
+    def write_to_wks(self, wks_name, dataframe, pos):
+        wks = self.get_wks(wks_name)
         wks.set_dataframe(dataframe, pos)
 
     def read_dice_config(self):
