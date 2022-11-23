@@ -5,11 +5,13 @@ import pygsheets
 class GSheet(object):
     _SHEET_TITLE = 'Dice Los Numeros'
     _CONFIG_WKS = 'Dice Setup'
+    
     def __init__(self) -> None:
 
         self.credentials_path = self.get_credentials_path()
         self.gc = pygsheets.authorize(service_file=self.credentials_path)
         self.sheet = self.gc.open(self._SHEET_TITLE)
+        self.cfg_wks = self.get_wks(self._CONFIG_WKS)
 
     def get_credentials_path(self):
 
@@ -27,15 +29,13 @@ class GSheet(object):
 
     def write_to_wks(self, wks_name, dataframe, pos):
         wks = self.get_wks(wks_name)
+        wks.clear()
         wks.set_dataframe(dataframe, pos)
 
     def read_dice_config(self):
-        print("Getting dice")
-
         dice_list = []
-        wks = self.get_wks(self._CONFIG_WKS)
 
-        df = wks.get_as_df(has_header=True, start="B1")
+        df = self.cfg_wks.get_as_df(has_header=True, start="B1")
 
         atk_col = 0
         pip_col = 2
@@ -62,6 +62,17 @@ class GSheet(object):
 
         return dice_list
 
+    def read_parameters(self):
+
+        param_dict = {}
+        params_df = self.cfg_wks.get_as_df(has_header=True, start="A10", end="I11")
+
+        for name, data in params_df.items():
+            param_dict[name] = data[0]
+
+        return param_dict
+
 
 if __name__ == "__main__":
     gsheet = GSheet()
+

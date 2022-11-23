@@ -48,8 +48,5 @@ class D6Die(object):
                 'pips': pips[i]
             }
 
-
-
-
     def set_active_face(self, face):
         self.active_face = self.faces[face]
