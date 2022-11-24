@@ -1,11 +1,9 @@
 
 
-from copy import deepcopy
 import pandas as pd
-from pprint import pp as pp
 
-from die import DieD6, D6Die
-from rollsim import SingleRoll, DiceDistribution
+from die import D6Die
+from dice_distribution import DiceDistribution
 from gsheets.gsheets import GSheet
 
 GSHEET = GSheet()
@@ -109,30 +107,8 @@ def upload_distribution_to_gsheets(dice_distribution, gsheet, output_wks):
             gsheet.write_to_wks(wks, face_data_frame, (row,col))
             row += len(face_data_frame.index) + 2
 
-        #print(crit, ac_distro)
-
-        #print("\nTesting Crit Threshold %s" % crit)
-
-        #for ac, face_distro in ac_distro.face_distributions.items():
-            #print(ac, face_distro)
-            #print("    Testing AC %s" % ac)
-
-            #pp(face_distro.all_results)
-
-            # print("        Hit Percent: %s" % face_distro.hit_percentage)
-            # print("        Crit Percent of Total: %s" % face_distro.crit_percentage_of_total)
-            # print("        Crit Percent of Hits: %s" % face_distro.crit_percentage_of_hits)
-            #print(face_distro.faces_data_frame)
-
-            
-
-
-
 
 def main():
-
-    #get_dice()
-    #roll_from_sheet()
 
     gsheet = GSheet()
     dice_setup = DiceSetup(gsheet)
@@ -140,7 +116,6 @@ def main():
     dice_distribution = DiceDistribution(dice_setup)
 
     upload_distribution_to_gsheets(dice_distribution, gsheet, dice_setup.output_wks)
-    
 
     print("All done!")
 
