@@ -1,4 +1,7 @@
 from copy import deepcopy as deepcopy
+from pprint import pprint as pp
+
+import pandas as pd
 
 
 class UncalculatedError(Exception):
@@ -29,9 +32,9 @@ class SingleRoll(object):
         self.defense_modifier = defense_modifier
         self.roll_index = roll_index
 
-        self.attack_value = None
+        self.attack_total = None
         self.hit = None
-        self.pips = None
+        self.pip_total = None
         self.crit = None
 
         self.rolled_dice = []
@@ -68,9 +71,9 @@ class SingleRoll(object):
         elif self.defense_modifier == 'dis':
             defense_num = min(defense_num, defense_alt_num)
         
-        self.attack_value = attack_num + defense_num
+        self.attack_total = attack_num + defense_num
 
-        if self.attack_value >= self.ac:
+        if self.attack_total >= self.ac:
             self.hit = True
         else:
             self.hit = False
@@ -99,9 +102,9 @@ class SingleRoll(object):
         elif self.defense_modifier == 'dis':
             defense_pips_num = max(defense_pips_num, defense_pips_alt_num)
 
-        self.pips = attack_pips_num + defense_pips_num
+        self.pip_total = attack_pips_num + defense_pips_num
 
-        if self.hit == True and self.pips >= self.crit_threshold:
+        if self.hit == True and self.pip_total >= self.crit_threshold:
             self.crit = True
         else:
             self.crit = False
@@ -130,12 +133,31 @@ class DiceDistribution(object):
         self._dice_setup = dice_setup
         self.crit_distributions = {}
         self.distribute_acs_for_crit_threshold()
+        self.create_data_frame()
 
     def distribute_acs_for_crit_threshold(self):
         
         for crit_threshold in self._dice_setup.crit_range:
             ac_distribution = ArmorClassDistribution(self._dice_setup, crit_threshold)
             self.crit_distributions[crit_threshold] = ac_distribution
+
+    def create_data_frame(self):
+
+        data_list = []
+        data_dict = {}
+        data_dict['Attack Die Primary'] = self._dice_setup.attack_die_primary.name
+        if self._dice_setup.attack_die_secondary:
+            data_dict['Attack Die Secondary'] = self._dice_setup.attack_die_secondary.name
+        data_dict['Attack Modifier'] = str(self._dice_setup.attack_modifier)
+        
+        if self._dice_setup.defense_die_primary:
+            data_dict['Defense Die Primary'] = self._dice_setup.defense_die_primary.name
+        if self._dice_setup.defense_die_secondary:
+            data_dict['Defense Die Secondary'] = self._dice_setup.defense_die_secondary.name
+        data_dict['Defense Modifier'] = str(self._dice_setup.defense_modifier)
+        data_list.append(data_dict)
+
+        self.data_frame = pd.DataFrame(data_list)
 
 
 class ArmorClassDistribution(object):
@@ -145,12 +167,35 @@ class ArmorClassDistribution(object):
         self._crit_threshold = crit_threshold
         self.face_distributions = {}
         self.distribute_faces_for_ac()
+        self.create_data_frame()
 
     def distribute_faces_for_ac(self):
         
         for ac in self._dice_setup.ac_range:
             face_distribution = FaceDistribution(self._dice_setup, ac, self._crit_threshold)
             self.face_distributions[ac] = face_distribution
+
+    def create_data_frame(self):
+
+        data_list = []
+
+        for ac, distro in self.face_distributions.items():
+            data_dict = {}
+            data_dict['AC'] = ac
+            data_dict['Crit Threshold'] = self._crit_threshold
+            data_dict['Total Results'] = str(len(distro.all_results))
+            data_dict['Hit Results'] = str(len(distro.hits))
+            data_dict['Hit Rate'] = str(distro.hit_percentage)
+            data_dict['Crit Results'] = str(len(distro.hits))
+            data_dict['Crit Rate (Total)'] = str(distro.crit_percentage_of_total)
+            data_dict['Crit Rate (Hits)'] = str(distro.crit_percentage_of_hits)
+            
+
+            data_list.append(data_dict)
+
+        self.data_frame = pd.DataFrame(data_list)
+        self.data_frame = self.data_frame.transpose().reset_index()
+        #print(ac_data_frame)
 
 
 class FaceDistribution(object):
@@ -165,6 +210,7 @@ class FaceDistribution(object):
         self._all_results = []
         self._hits = []
         self._crits = []
+        self.data_frame = None
 
         self._distro_dict = {
             'attack_dice': [],
@@ -174,6 +220,9 @@ class FaceDistribution(object):
         }
 
         self.add_dice_to_distro()
+        self.setup_rolls()
+        self.calculate_results()
+        self.create_data_frame()
 
     @property
     def all_results(self):
@@ -186,6 +235,10 @@ class FaceDistribution(object):
     @property
     def crits(self):
         return self._crits
+    
+    @property
+    def faces_data_frame(self):
+        return self._faces_data_frame
 
     @property
     def hit_percentage(self):
@@ -193,7 +246,9 @@ class FaceDistribution(object):
         if not self.is_calculated:
             raise UncalculatedError("Results have not yet been calculated")
 
-        hit_percentage = float(len(self._hits)) / float(len(self._all_results))
+        hit_percentage = 0.0
+        if len(self._all_results) > 0:
+            hit_percentage = float(len(self._hits)) / float(len(self._all_results))
         hit_percentage = hit_percentage * 100
         hit_percentage = round(hit_percentage, 2)
         return hit_percentage
@@ -204,7 +259,10 @@ class FaceDistribution(object):
         if not self.is_calculated:
             raise UncalculatedError("Results have not yet been calculated")
 
-        crit_percentage = float(len(self._crits)) / float(len(self._all_results))
+        crit_percentage = 0.0
+        
+        if len(self._all_results) > 0:
+            crit_percentage = float(len(self._crits)) / float(len(self._all_results))
         crit_percentage = crit_percentage * 100
         crit_percentage = round(crit_percentage, 2)
         return crit_percentage
@@ -215,7 +273,9 @@ class FaceDistribution(object):
         if not self.is_calculated:
             raise UncalculatedError("Results have not yet been calculated")
 
-        crit_percentage = float(len(self._crits)) / float(len(self._hits))
+        crit_percentage = 0.0
+        if len(self._hits) > 0:
+            crit_percentage = float(len(self._crits)) / float(len(self._hits))
         crit_percentage = crit_percentage * 100
         crit_percentage = round(crit_percentage, 2)
         return crit_percentage
@@ -376,6 +436,41 @@ class FaceDistribution(object):
                     )
                     self._all_results.append(result)
                     roll_num += 1
+    
+    def create_data_frame(self):
+        data_list = []
+
+        for result in self._all_results:
+
+            data_dict = {}
+            data_dict['Result Number'] = result.roll_index
+            data_dict['Die Name (Primary Attack)'] = result.attack_die_primary.name
+            data_dict['Face (Primary Attack)'] = result.attack_die_primary.active_face['number']
+            data_dict['Pips (Primary Attack)'] = result.attack_die_primary.active_face['pips']
+            if result.attack_die_secondary:
+                data_dict['Die Name (Secondary Attack)'] = result.attack_die_secondary.name
+                data_dict['Face (Secondary Attack)'] = result.attack_die_secondary.active_face['number']
+                data_dict['Pips (Secondary Attack)'] = result.attack_die_secondary.active_face['pips']
+            if result.defense_die_primary:
+                data_dict['Die Name (Primary Defense)'] = result.defense_die_primary.name
+                data_dict['Face (Primary Defense)'] = result.defense_die_primary.active_face['number']
+                data_dict['Pips (Primary Defense)'] = result.defense_die_primary.active_face['pips']
+            if result.defense_die_secondary:
+                data_dict['Die Name (Secondary Defense)'] = result.defense_die_secondary.name
+                data_dict['Face (Secondary Defense)'] = result.defense_die_secondary.active_face['number']
+                data_dict['Pips (Secondary Defense)'] = result.defense_die_secondary.active_face['pips']
+            if result.attack_modifier:
+                data_dict['Attack Modifier'] = result.attack_modifier
+            if result.defense_modifier:
+                data_dict['Defense Modifier'] = result.defense_modifier
+            data_dict['Attack Total'] = result.attack_total
+            data_dict['Pip Total'] = result.pip_total
+            data_dict['AC'] = result.ac
+            data_dict['Crit Threshold'] = result.crit_threshold
+
+            data_list.append(data_dict)
+
+        self.data_frame = pd.DataFrame(data_list)
 
 
 

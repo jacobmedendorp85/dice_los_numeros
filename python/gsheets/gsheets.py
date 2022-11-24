@@ -27,10 +27,8 @@ class GSheet(object):
         wks = self.get_wks(wks_name)
         wks.clear()
 
-    def write_to_wks(self, wks_name, dataframe, pos):
-        wks = self.get_wks(wks_name)
-        wks.clear()
-        wks.set_dataframe(dataframe, pos)
+    def write_to_wks(self, wks_obj, dataframe, pos, copy_head=True):
+        wks_obj.set_dataframe(dataframe, pos, copy_head=copy_head)
 
     def read_dice_config(self):
         dice_list = []
