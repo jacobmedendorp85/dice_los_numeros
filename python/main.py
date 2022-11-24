@@ -1,15 +1,9 @@
 
 
-import pandas as pd
-
 from die import D6Die
 from dice_distribution import DiceDistribution
 from gsheets.gsheets import GSheet
 
-GSHEET = GSheet()
-
-
-DICE_LIST = []
 
 class UnknownDieError(Exception):
     pass
@@ -51,17 +45,17 @@ class DiceSetup(object):
 
         params = self._gsheet.read_parameters()
 
-        attack_die_primary_name = params.get("Attack Die 1")
+        attack_die_primary_name = params.get("Primary Attack")
         self.attack_die_primary = self.get_die_by_name(attack_die_primary_name)
-        attack_die_secondary_name = params.get("Attack Die 2")
+        attack_die_secondary_name = params.get("Secondary Attack")
         self.attack_die_secondary = self.get_die_by_name(attack_die_secondary_name)
         attack_mod = params.get("Attack Modifier")
         if attack_mod != 'none':
             self.attack_modifier = attack_mod
         
-        defense_die_primary_name = params.get("Defense Die 1")
+        defense_die_primary_name = params.get("Primary Defense")
         self.defense_die_primary = self.get_die_by_name(defense_die_primary_name)
-        defense_die_secondary_name = params.get("Defense Die 2")
+        defense_die_secondary_name = params.get("Secondary Defense")
         self.defense_die_secondary = self.get_die_by_name(defense_die_secondary_name)
         defense_mod = params.get("Defense Modifier")
         if defense_mod != 'none':
